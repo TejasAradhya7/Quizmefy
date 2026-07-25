@@ -1,0 +1,52 @@
+{
+  "family": "quizmefy-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/quizmefyTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "quizmefy-api",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/quizmefy-api:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "PORT", "value": "3000" },
+        { "name": "AI_PROVIDER", "value": "openai" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/quizmefy/DATABASE_URL" },
+        { "name": "REDIS_URL", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/quizmefy/REDIS_URL" },
+        { "name": "JWT_SECRET", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/quizmefy/JWT_SECRET" },
+        { "name": "JWT_REFRESH_SECRET", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/quizmefy/JWT_REFRESH_SECRET" },
+        { "name": "OPENAI_API_KEYS", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/quizmefy/OPENAI_API_KEYS" },
+        { "name": "ANTHROPIC_API_KEYS", "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/quizmefy/ANTHROPIC_API_KEYS" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/quizmefy-api",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"],
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3,
+        "startPeriod": 45
+      },
+      "readonlyRootFilesystem": false,
+      "user": "1001"
+    }
+  ]
+}

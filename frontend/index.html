@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quizmefy — AI-Powered Quiz Generator</title>
+  <meta name="description" content="Generate intelligent, customized quizzes on any topic instantly using advanced AI. Powered by GPT-4o and Claude." />
+  <meta name="keywords" content="AI quiz generator, quiz maker, educational tool, GPT quiz, interactive learning" />
+  <meta property="og:title" content="Quizmefy — AI-Powered Quiz Generator" />
+  <meta property="og:description" content="Create stunning, intelligent quizzes in seconds with AI." />
+  <meta property="og:type" content="website" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ─── Navigation ─────────────────────────────────────────────────────── -->
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo" id="nav-logo" aria-label="Quizmefy Home">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">Quizmefy</span>
+      </a>
+      <div class="nav-actions">
+        <button class="btn-ghost" id="nav-login-btn" aria-label="Login">Login</button>
+        <button class="btn-primary-sm" id="nav-signup-btn" aria-label="Sign up">Get Started</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── Hero Section ───────────────────────────────────────────────────── -->
+  <section class="hero" id="hero" aria-label="Hero section">
+    <div class="hero-bg">
+      <div class="orb orb-1" aria-hidden="true"></div>
+      <div class="orb orb-2" aria-hidden="true"></div>
+      <div class="orb orb-3" aria-hidden="true"></div>
+      <div class="grid-overlay" aria-hidden="true"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge" id="hero-badge">
+        <span class="badge-dot"></span>
+        <span>Powered by GPT-4o & Claude</span>
+      </div>
+      <h1 class="hero-title" id="hero-title">
+        Generate Brilliant<br/>
+        <span class="gradient-text">AI Quizzes</span><br/>
+        In Seconds
+      </h1>
+      <p class="hero-subtitle" id="hero-subtitle">
+        Turn any topic into a perfectly crafted quiz with detailed explanations,
+        multiple difficulties, and instant delivery. No effort required.
+      </p>
+      <div class="hero-cta" id="hero-cta">
+        <button class="btn-primary-lg" id="hero-try-btn" onclick="scrollToGenerator()">
+          Try it Free
+          <span class="btn-arrow">→</span>
+        </button>
+        <div class="hero-stats">
+          <div class="stat"><strong>∞</strong> Topics</div>
+          <div class="stat-divider"></div>
+          <div class="stat"><strong>&lt;5s</strong> Generation</div>
+          <div class="stat-divider"></div>
+          <div class="stat"><strong>100%</strong> AI-Powered</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Quiz Generator ─────────────────────────────────────────────────── -->
+  <section class="generator-section" id="generator" aria-label="Quiz generator">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Build Your Quiz</h2>
+        <p class="section-subtitle">Customize your quiz parameters and let AI do the heavy lifting.</p>
+      </div>
+
+      <div class="generator-card glass-card" id="generator-card">
+        <form class="generator-form" id="quiz-form" novalidate>
+
+          <!-- Topic Input -->
+          <div class="form-group" id="form-group-topic">
+            <label class="form-label" for="topic-input">Topic or Subject</label>
+            <div class="input-wrapper">
+              <span class="input-icon" aria-hidden="true">🎯</span>
+              <input
+                type="text"
+                id="topic-input"
+                class="form-input"
+                placeholder="e.g. Quantum Physics, World War II, JavaScript Closures..."
+                maxlength="200"
+                required
+                aria-required="true"
+                autocomplete="off"
+              />
+            </div>
+            <div class="form-hint" id="topic-hint">Be specific for better results — "Python decorators" beats just "Python"</div>
+          </div>
+
+          <!-- Options Row -->
+          <div class="form-row" id="form-row-options">
+
+            <!-- Difficulty -->
+            <div class="form-group" id="form-group-difficulty">
+              <label class="form-label" for="difficulty-select">Difficulty</label>
+              <div class="select-wrapper">
+                <select id="difficulty-select" class="form-select" aria-label="Select difficulty">
+                  <option value="EASY">🟢 Easy</option>
+                  <option value="MEDIUM" selected>🟡 Medium</option>
+                  <option value="HARD">🔴 Hard</option>
+                  <option value="EXPERT">⚡ Expert</option>
+                </select>
+                <span class="select-arrow" aria-hidden="true">▾</span>
+              </div>
+            </div>
+
+            <!-- Number of Questions -->
+            <div class="form-group" id="form-group-questions">
+              <label class="form-label" for="num-questions">Questions</label>
+              <div class="number-control" id="number-control">
+                <button type="button" class="num-btn" id="num-decrease" aria-label="Decrease questions" onclick="adjustQuestions(-1)">−</button>
+                <input
+                  type="number"
+                  id="num-questions"
+                  class="num-input"
+                  value="5"
+                  min="1"
+                  max="20"
+                  aria-label="Number of questions"
+                />
+                <button type="button" class="num-btn" id="num-increase" aria-label="Increase questions" onclick="adjustQuestions(1)">+</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Custom Instructions (collapsible) -->
+          <div class="form-group" id="form-group-advanced">
+            <button type="button" class="advanced-toggle" id="advanced-toggle" onclick="toggleAdvanced()" aria-expanded="false">
+              <span>Advanced Options</span>
+              <span class="toggle-icon" id="toggle-icon">⌄</span>
+            </button>
+            <div class="advanced-content hidden" id="advanced-content" aria-hidden="true">
+              <label class="form-label" for="custom-instructions">Custom Instructions</label>
+              <textarea
+                id="custom-instructions"
+                class="form-textarea"
+                rows="3"
+                placeholder="e.g. Focus on practical applications, include trick questions, use real-world examples..."
+                maxlength="500"
+                aria-label="Custom instructions for quiz generation"
+              ></textarea>
+              <div class="char-count" id="char-count">0 / 500</div>
+            </div>
+          </div>
+
+          <!-- Auth Status Banner -->
+          <div class="auth-banner" id="auth-banner" aria-live="polite">
+            <span class="auth-icon">💡</span>
+            <span id="auth-banner-text">Login to save quiz history and access your generated quizzes anytime.</span>
+            <button type="button" class="auth-link" id="auth-link-btn" onclick="openAuthModal('login')">Login</button>
+          </div>
+
+          <!-- Generate Button -->
+          <button type="submit" class="btn-generate" id="generate-btn" form="quiz-form">
+            <span class="btn-text" id="generate-btn-text">Generate Quiz</span>
+            <span class="btn-spinner hidden" id="generate-spinner" aria-hidden="true">
+              <span class="spinner"></span>
+            </span>
+            <span class="btn-icon" id="generate-btn-icon" aria-hidden="true">✨</span>
+          </button>
+
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Quiz Result ─────────────────────────────────────────────────────── -->
+  <section class="result-section hidden" id="result-section" aria-label="Quiz result" aria-live="polite">
+    <div class="container">
+
+      <!-- Quiz Header -->
+      <div class="quiz-header" id="quiz-header">
+        <div class="quiz-meta" id="quiz-meta">
+          <span class="quiz-tag" id="quiz-difficulty-tag">Medium</span>
+          <span class="quiz-tag" id="quiz-questions-tag">5 Questions</span>
+          <span class="quiz-tag cache-tag hidden" id="quiz-cache-tag">⚡ Cached</span>
+          <span class="quiz-latency" id="quiz-latency"></span>
+        </div>
+        <h2 class="quiz-title" id="quiz-title"></h2>
+        <p class="quiz-description" id="quiz-description"></p>
+        <div class="quiz-actions" id="quiz-actions">
+          <button class="btn-secondary" id="retake-btn" onclick="retakeQuiz()" aria-label="Take quiz again">Retake</button>
+          <button class="btn-secondary" id="new-quiz-btn" onclick="resetQuiz()" aria-label="Generate new quiz">New Quiz</button>
+          <button class="btn-primary-sm" id="share-btn" onclick="shareQuiz()" aria-label="Share quiz">Share</button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="quiz-progress" id="quiz-progress" aria-label="Quiz progress">
+        <div class="progress-info">
+          <span id="progress-text">Question 1 of 5</span>
+          <span id="score-text" class="score-display">Score: 0</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress-bar-wrapper">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Questions Container -->
+      <div class="questions-container" id="questions-container"></div>
+
+      <!-- Quiz Complete Card -->
+      <div class="quiz-complete hidden" id="quiz-complete" aria-live="assertive">
+        <div class="complete-card glass-card">
+          <div class="complete-icon" id="complete-icon" aria-hidden="true">🎉</div>
+          <h3 class="complete-title" id="complete-title">Quiz Complete!</h3>
+          <div class="score-ring-wrapper" id="score-ring-wrapper" aria-label="Final score">
+            <svg class="score-ring" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="ring-bg" cx="60" cy="60" r="50"/>
+              <circle class="ring-progress" id="ring-progress" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="score-center">
+              <span class="score-percent" id="score-percent">0%</span>
+              <span class="score-label">Score</span>
+            </div>
+          </div>
+          <p class="complete-message" id="complete-message"></p>
+          <div class="complete-actions">
+            <button class="btn-primary-lg" id="complete-retake-btn" onclick="retakeQuiz()">Try Again</button>
+            <button class="btn-secondary" id="complete-new-btn" onclick="resetQuiz()">New Quiz</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ─── Features Section ───────────────────────────────────────────────── -->
+  <section class="features-section" id="features" aria-label="Features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Why Quizmefy?</h2>
+        <p class="section-subtitle">Production-grade AI infrastructure meets beautiful design.</p>
+      </div>
+      <div class="features-grid" id="features-grid">
+        <article class="feature-card glass-card" id="feature-ai">
+          <div class="feature-icon" aria-hidden="true">🧠</div>
+          <h3 class="feature-title">Dual AI Providers</h3>
+          <p class="feature-desc">Powered by GPT-4o and Claude with automatic failover and key rotation — zero downtime.</p>
+        </article>
+        <article class="feature-card glass-card" id="feature-cache">
+          <div class="feature-icon" aria-hidden="true">⚡</div>
+          <h3 class="feature-title">Redis Caching</h3>
+          <p class="feature-desc">Identical requests served in &lt;10ms via Redis cache. Smart SHA-256 cache keys eliminate duplicates.</p>
+        </article>
+        <article class="feature-card glass-card" id="feature-secure">
+          <div class="feature-icon" aria-hidden="true">🔐</div>
+          <h3 class="feature-title">Enterprise Security</h3>
+          <p class="feature-desc">JWT auth with refresh token rotation, rate limiting, Helmet.js headers, and zero key exposure.</p>
+        </article>
+        <article class="feature-card glass-card" id="feature-deploy">
+          <div class="feature-icon" aria-hidden="true">🚀</div>
+          <h3 class="feature-title">AWS Auto-Deploy</h3>
+          <p class="feature-desc">Push to main → GitHub Actions builds, tests, and deploys to ECS + S3/CloudFront automatically.</p>
+        </article>
+        <article class="feature-card glass-card" id="feature-db">
+          <div class="feature-icon" aria-hidden="true">🗄️</div>
+          <h3 class="feature-title">Optimized Database</h3>
+          <p class="feature-desc">PostgreSQL with Prisma ORM, indexed queries, and Prisma transactions for atomic operations.</p>
+        </article>
+        <article class="feature-card glass-card" id="feature-docker">
+          <div class="feature-icon" aria-hidden="true">🐳</div>
+          <h3 class="feature-title">Docker Ready</h3>
+          <p class="feature-desc">Multi-stage builds, non-root users, docker-compose for local dev. Spin up in one command.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-overlay hidden" id="auth-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title" onclick="closeAuthModal(event)">
+    <div class="modal-card glass-card" id="auth-modal-card" onclick="event.stopPropagation()">
+      <button class="modal-close" id="modal-close-btn" type="button" onclick="closeAuthModal(null, true)" aria-label="Close modal">✕</button>
+
+      <!-- Tabs -->
+      <div class="modal-tabs" role="tablist" id="modal-tabs">
+        <button class="tab-btn active" id="tab-login" role="tab" aria-selected="true" onclick="switchTab('login')">Login</button>
+        <button class="tab-btn" id="tab-signup" role="tab" aria-selected="false" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Modal Title -->
+      <h2 class="modal-title" id="modal-title">Welcome back</h2>
+
+      <!-- Error Display -->
+      <div class="modal-error hidden" id="modal-error" role="alert" aria-live="assertive"></div>
+
+      <!-- Login Form -->
+      <form class="modal-form" id="login-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="login-email">Email</label>
+          <input type="email" id="login-email" class="form-input" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="login-password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="password-toggle" id="login-pw-toggle" onclick="togglePassword('login-password', 'login-pw-toggle')" aria-label="Toggle password visibility">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary-full" id="login-submit-btn">
+          <span id="login-btn-text">Login</span>
+          <span class="spinner hidden" id="login-spinner"></span>
+        </button>
+      </form>
+
+      <!-- Signup Form -->
+      <form class="modal-form hidden" id="signup-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="signup-name">Display Name</label>
+          <input type="text" id="signup-name" class="form-input" placeholder="Your name" autocomplete="name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signup-email">Email</label>
+          <input type="email" id="signup-email" class="form-input" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="signup-password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="signup-password" class="form-input" placeholder="Min 8 chars, 1 uppercase, 1 number" required autocomplete="new-password" />
+            <button type="button" class="password-toggle" id="signup-pw-toggle" onclick="togglePassword('signup-password', 'signup-pw-toggle')" aria-label="Toggle password visibility">👁</button>
+          </div>
+          <div class="password-strength" id="password-strength" aria-live="polite"></div>
+        </div>
+        <button type="submit" class="btn-primary-full" id="signup-submit-btn">
+          <span id="signup-btn-text">Create Account</span>
+          <span class="spinner hidden" id="signup-spinner"></span>
+        </button>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ─── Toast Notification ─────────────────────────────────────────────── -->
+  <div class="toast hidden" id="toast" role="status" aria-live="polite" aria-atomic="true">
+    <span class="toast-icon" id="toast-icon"></span>
+    <span class="toast-msg" id="toast-msg"></span>
+  </div>
+
+  <!-- ─── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="footer" id="footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <span>⚡</span> Quizmefy
+      </div>
+      <p class="footer-copy">© 2026 Quizmefy. Built with Node.js, PostgreSQL, Redis & AWS.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

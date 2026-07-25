@@ -1,0 +1,163 @@
+// Quizmefy — Prisma Schema
+// Database: PostgreSQL
+// Run: npx prisma migrate dev --name init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users & Auth ────────────────────────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  displayName  String?
+  role         Role      @default(USER)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+  quizRequests QuizRequest[]
+
+  @@index([email])
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  isRevoked    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([refreshToken])
+  @@map("sessions")
+}
+
+// ─── Quiz Generation ─────────────────────────────────────────────────────────
+
+model QuizRequest {
+  id         String      @id @default(cuid())
+  userId     String?
+  prompt     String
+  topic      String
+  difficulty Difficulty  @default(MEDIUM)
+  numQuestions Int       @default(5)
+  aiProvider String      @default("openai")
+  cacheHit   Boolean     @default(false)
+  latencyMs  Int?
+  createdAt  DateTime    @default(now())
+
+  user User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  quiz Quiz?
+
+  @@index([userId])
+  @@index([topic])
+  @@index([createdAt])
+  @@map("quiz_requests")
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  requestId   String   @unique
+  title       String
+  description String?
+  topic       String
+  difficulty  Difficulty
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  request   QuizRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@index([topic])
+  @@index([createdAt])
+  @@map("quizzes")
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  quizId        String
+  questionNumber Int
+  text          String
+  type          QuestionType @default(MULTIPLE_CHOICE)
+  options       Json     // Array of { id, text } objects
+  correctAnswer String   // Option id
+  explanation   String?
+  difficulty    Difficulty?
+  createdAt     DateTime @default(now())
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@map("questions")
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+}
+
+// ─── Cache Persistence (DB-backed fallback) ───────────────────────────────────
+
+model CacheEntry {
+  id        String   @id @default(cuid())
+  cacheKey  String   @unique
+  payload   Json
+  expiresAt DateTime
+  hitCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cacheKey])
+  @@index([expiresAt])
+  @@map("cache_entries")
+}
+
+// ─── API Usage Metrics ────────────────────────────────────────────────────────
+
+model ApiUsageLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  endpoint     String
+  method       String
+  statusCode   Int
+  latencyMs    Int
+  ipAddress    String?
+  userAgent    String?
+  tokensUsed   Int?
+  provider     String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([endpoint])
+  @@map("api_usage_logs")
+}

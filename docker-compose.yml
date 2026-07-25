@@ -1,0 +1,117 @@
+
+# ─── Shared network ───────────────────────────────────────────
+networks:
+  quizmefy-net:
+    driver: bridge
+
+# ─── Named volumes ────────────────────────────────────────────
+volumes:
+  postgres-data:
+  redis-data:
+
+# ─── Services ─────────────────────────────────────────────────
+services:
+
+  # ── PostgreSQL Database ──────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: quizmefy-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: quizmefy
+      POSTGRES_PASSWORD: quizmefy_password
+      POSTGRES_DB: quizmefy_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - quizmefy-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quizmefy -d quizmefy_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis Cache ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: quizmefy-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - quizmefy-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── API Server ────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: quizmefy-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://quizmefy:quizmefy_password@postgres:5432/quizmefy_db
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - quizmefy-net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 45s
+      retries: 3
+
+  # ── Frontend (nginx static file server) ──────────────────────
+  frontend:
+    image: nginx:alpine
+    container_name: quizmefy-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+    networks:
+      - quizmefy-net
+
+  # ── Prisma Studio (dev only) ──────────────────────────────────
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: quizmefy-studio
+    command: npx prisma studio --port 5555 --browser none
+    environment:
+      DATABASE_URL: postgresql://quizmefy:quizmefy_password@postgres:5432/quizmefy_db
+    ports:
+      - "5555:5555"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - quizmefy-net
+    profiles:
+      - dev  # Only starts with: docker compose --profile dev up
